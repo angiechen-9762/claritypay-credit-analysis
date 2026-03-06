@@ -1,0 +1,16 @@
+# Large data file — exceeds GitHub's 100MB limit, download from Kaggle
+archive/Loan_status_2007-2020Q3.gzip
+
+# macOS junk
+.DS_Store
+
+# Temporary Office lock files (created when Word/PowerPoint is open)
+~$*
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter checkpoint files
+.ipynb_checkpoints/
