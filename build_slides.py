@@ -28,7 +28,7 @@ MGRAY  = RGBColor(0xE0, 0xE0, 0xE0)
 DGRAY  = RGBColor(0x42, 0x42, 0x42)
 GREEN  = RGBColor(0x2E, 0x7D, 0x32)
 
-FIGS = 'figs/'
+FIGS = 'figures/'
 
 
 # ─────────────────────────────────────────────────────────────
@@ -250,7 +250,7 @@ def slide_data(prs):
                    subtitle='Scope: Fully Paid or Charged Off only  ·  Origination-time features only  ·  No post-loan data leakage')
 
     # Left: volume/year chart
-    add_image(slide, FIGS + 'volume_bad_rate_by_year.png',
+    add_image(slide, FIGS + 'volume_by_year.png',
               Inches(0.2), Inches(1.35), Inches(7.5), Inches(5.3))
 
     # Right: stats block
@@ -290,10 +290,10 @@ def slide_risk_drivers(prs):
 
     # 2×2 grid of charts
     charts = [
-        (FIGS + 'risk_by_fico.png',      'FICO Score at Origination'),
-        (FIGS + 'risk_by_grade.png',     'Loan Grade (A–G)'),
-        (FIGS + 'risk_by_revol_util.png','Revolving Credit Utilization'),
-        (FIGS + 'risk_by_purpose.png',   'Loan Purpose'),
+        (FIGS + 'bad_rate_by_fico.png',      'FICO Score at Origination'),
+        (FIGS + 'bad_rate_by_grade.png',     'Loan Grade (A–G)'),
+        (FIGS + 'bad_rate_by_revol_util.png','Revolving Credit Utilization'),
+        (FIGS + 'bad_rate_by_purpose.png',   'Loan Purpose'),
     ]
 
     positions = [
@@ -310,28 +310,58 @@ def slide_risk_drivers(prs):
 
 
 # ─────────────────────────────────────────────────────────────
+# SLIDE 4b — HIGH-RISK SEGMENTS: INTERACTION HEATMAP
+# ─────────────────────────────────────────────────────────────
+def slide_heatmap(prs):
+    slide = blank_slide(prs)
+    add_header_bar(slide,
+                   'Risk Compounds: FICO × DTI Interaction',
+                   subtitle='Low FICO + High DTI = the worst borrower pocket')
+
+    # Full-width heatmap (side-by-side bad rate + volume panels from notebook)
+    add_image(slide, FIGS + 'heatmap_fico_dti.png',
+              Inches(0.2), Inches(1.25), Inches(13.0), Inches(4.8))
+
+    # Key callout box
+    add_rect(slide, Inches(0.3), Inches(6.2), Inches(8.5), Inches(0.9),
+             RGBColor(0xFF, 0xF3, 0xE0))
+    add_textbox(slide,
+                'Borrowers with FICO < 680 AND DTI > 35% default at the highest rate — '
+                'nearly 2–3× the portfolio average. The right panel confirms this is a '
+                'large enough segment to matter commercially.',
+                Inches(0.4), Inches(6.25), Inches(8.3), Inches(0.82),
+                size=13, color=RGBColor(0xE6, 0x51, 0x00), italic=False)
+
+    # Side note
+    add_textbox(slide,
+                'Variables compound:\nrisk is not additive —\nit multiplies.',
+                Inches(9.1), Inches(6.2), Inches(4.0), Inches(1.0),
+                size=14, bold=True, color=BLUE)
+
+
+# ─────────────────────────────────────────────────────────────
 # SLIDE 5 — POLICY RULES TABLE
 # ─────────────────────────────────────────────────────────────
 def slide_rules(prs):
     slide = blank_slide(prs)
-    add_header_bar(slide, 'Six Evidence-Based Decline Rules')
+    add_header_bar(slide, 'Recommended Policy: Three Evidence-Based Decline Rules')
 
     rows_data = [
         # (Rule, Threshold, Bad Rate if Declined, Rationale)
-        ('Rule',             'Threshold',          'Bad Rate if Declined', 'Business Rationale'),
-        ('FICO Score',       '< 680',              '24.4%',  'Near-subprime; 2× the average default rate'),
-        ('Loan Grade',       'E, F, or G',         '39.9%',  'Lending Club\'s own model flags >28% expected default'),
-        ('Revolving Util',   '> 80%',              '21.6%',  'Maxed-out credit = severe financial stress'),
-        ('Bankruptcy',       'Any record',         '22.5%',  'Prior bankruptcy = proven inability to repay'),
-        ('Credit Inquiries', '≥ 4 in last 6 mo',  '~27%',   'Rapid credit-seeking = financial desperation signal'),
-        ('DTI',              '> 35%',              '~29%',   'Monthly debt burden exceeds safe capacity threshold'),
+        ('Rule',             'Threshold',    'Bad Rate if Declined', 'Business Rationale'),
+        ('FICO Score',       '< 680',        '~24%',
+         'Near-subprime borrowers default at ~2× the portfolio average'),
+        ('Loan Grade',       'E, F, or G',   '~35–40%',
+         'Lending Club\'s own risk model flags these tiers as highest-risk'),
+        ('Revolving Util',   '> 80%',        '~22%',
+         'Maxed-out credit signals severe financial stress independent of FICO'),
     ]
 
-    col_widths = [Inches(2.1), Inches(2.3), Inches(2.3), Inches(6.0)]
+    col_widths = [Inches(2.1), Inches(2.0), Inches(2.5), Inches(6.1)]
     table = slide.shapes.add_table(
-        7, 4,
-        Inches(0.3), Inches(1.25),
-        sum(col_widths), Inches(5.8)
+        4, 4,
+        Inches(0.3), Inches(1.3),
+        sum(col_widths), Inches(3.8)
     ).table
 
     for i, w in enumerate(col_widths):
@@ -341,18 +371,27 @@ def slide_rules(prs):
         for c, text in enumerate(row):
             cell = table.cell(r, c)
             if r == 0:
-                set_cell(cell, text, size=14, bold=True, bg=BLUE, fg=WHITE,
+                set_cell(cell, text, size=15, bold=True, bg=BLUE, fg=WHITE,
                          align=PP_ALIGN.CENTER)
             else:
                 bg = LGRAY if r % 2 == 0 else WHITE
                 txt_color = RED if c == 2 else DGRAY
                 bold_col = c in (0, 2)
-                set_cell(cell, text, size=13, bold=bold_col,
+                set_cell(cell, text, size=14, bold=bold_col,
                          bg=bg, fg=txt_color, align=PP_ALIGN.LEFT)
+
+    # Logic note
+    add_rect(slide, Inches(0.3), Inches(5.35), Inches(12.7), Inches(0.65),
+             RGBColor(0xE8, 0xF5, 0xE9))
+    add_textbox(slide,
+                '  Applied with OR logic: decline if any single rule triggers. '
+                'A borrower who is near-subprime OR heavily utilised OR in a high-risk grade is declined.',
+                Inches(0.35), Inches(5.38), Inches(12.5), Inches(0.6),
+                size=14, color=GREEN, bold=False)
 
     # Footnote
     add_textbox(slide,
-                'Baseline bad rate: 19.5%  ·  All rules use only origination-time data',
+                'Baseline bad rate: 19.5%  ·  All thresholds use only origination-time data',
                 Inches(0.3), Inches(7.1), Inches(10), Inches(0.32),
                 size=11, color=RGBColor(0x90, 0x90, 0x90), italic=True)
 
@@ -363,23 +402,24 @@ def slide_rules(prs):
 def slide_tradeoff(prs):
     slide = blank_slide(prs)
     add_header_bar(slide,
-                   'Recommended Ruleset: FICO < 680  OR  Grade E/F/G  OR  Revol Util > 80%')
+                   'Recommended Ruleset D: FICO < 680  OR  Grade E/F/G  OR  Revol Util > 80%')
 
-    # Left: trade-off scatter
-    add_image(slide, FIGS + 'tradeoff_scatter.png',
+    # Left: efficient frontier scatter
+    add_image(slide, FIGS + 'efficient_frontier.png',
               Inches(0.1), Inches(1.2), Inches(7.8), Inches(5.8))
 
     # Right: metrics panel header
     add_rect(slide, Inches(8.2), Inches(1.35), Inches(4.8), Inches(0.55), BLUE)
-    add_textbox(slide, '  Recommended Ruleset (R4)',
+    add_textbox(slide, '  Ruleset D — Key Metrics',
                 Inches(8.2), Inches(1.35), Inches(4.8), Inches(0.55),
                 size=15, bold=True, color=WHITE)
 
     metrics = [
-        ('Volume Declined',   '43.3%',  DGRAY),
-        ('New Bad Rate',       '15.5%',  GREEN),
-        ('Bad Rate Reduction', '−20.5%', GREEN),
-        ('Good Loans Lost',    '40.5%',  RED),
+        ('Baseline bad rate',  '19.5%',  DGRAY),
+        ('New bad rate',       '15.5%',  GREEN),
+        ('Bad rate reduction', '−4.0 pp (20.5%)', GREEN),
+        ('Volume declined',    '43.3%',  DGRAY),
+        ('Good loans lost',    '40.5%',  RED),
     ]
 
     top = Inches(2.05)
@@ -394,17 +434,17 @@ def slide_tradeoff(prs):
         top += Inches(0.62)
 
     # Callout
-    add_rect(slide, Inches(8.2), Inches(4.6), Inches(4.8), Inches(0.8),
+    add_rect(slide, Inches(8.2), Inches(5.2), Inches(4.8), Inches(0.9),
              RGBColor(0xE3, 0xF2, 0xFD))
     add_textbox(slide,
-                '"Elbow" of the trade-off curve — meaningful risk\n'
+                '"Elbow" of the efficient frontier — meaningful risk\n'
                 'reduction without catastrophic volume loss.',
-                Inches(8.3), Inches(4.65), Inches(4.6), Inches(0.75),
+                Inches(8.3), Inches(5.25), Inches(4.6), Inches(0.82),
                 size=13, color=BLUE, italic=True)
 
     # Bottom: ruleset comparison chart
     add_image(slide, FIGS + 'ruleset_comparison.png',
-              Inches(8.2), Inches(5.55), Inches(4.8), Inches(1.75))
+              Inches(8.2), Inches(6.25), Inches(4.8), Inches(1.05))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -469,9 +509,10 @@ def main():
     slide_problem(prs);          print("  Slide 2 — The Problem ✓")
     slide_data(prs);             print("  Slide 3 — Data Overview ✓")
     slide_risk_drivers(prs);     print("  Slide 4 — Key Risk Drivers ✓")
-    slide_rules(prs);            print("  Slide 5 — Policy Rules ✓")
-    slide_tradeoff(prs);         print("  Slide 6 — Trade-off Analysis ✓")
-    slide_recommendations(prs);  print("  Slide 7 — Recommendations ✓")
+    slide_heatmap(prs);          print("  Slide 5 — Interaction Heatmap ✓")
+    slide_rules(prs);            print("  Slide 6 — Policy Rules ✓")
+    slide_tradeoff(prs);         print("  Slide 7 — Trade-off Analysis ✓")
+    slide_recommendations(prs);  print("  Slide 8 — Recommendations ✓")
 
     out = 'slides.pptx'
     prs.save(out)
